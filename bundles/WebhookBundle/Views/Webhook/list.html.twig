@@ -1,0 +1,144 @@
+{# Override tmpl to "list" because otherwise AJAX calls render the whole content instead of just the raw output #}
+{% set isIndex = tmpl == 'index' ? true : false %}
+{% set tmpl = 'list' %}
+
+{% extends isIndex ? 'MilexCoreBundle:Default:content.html.twig' : 'MilexCoreBundle:Default:raw_output.html.twig' %}
+
+{% block headerTitle %}{% trans %}milex.webhook.webhooks{% endtrans %}{% endblock %}
+{% block milexContent %}milexWebhook{% endblock %}
+
+{% block actions %}
+    {{- include(
+        'MilexCoreBundle:Helper:page_actions.html.twig', {
+            templateButtons: {
+                'new': permissions['webhook:webhooks:create']
+            },
+            routeBase: 'webhook'
+    }) -}}
+{% endblock %}
+
+{% block content %}
+{% if isIndex %}
+<div class="panel panel-default bdr-t-wdh-0 mb-0">
+    {{- include(
+        'MilexCoreBundle:Helper:list_toolbar.html.twig', {
+            searchValue: searchValue,
+            searchHelp: 'milex.page.help.searchcommands',
+            action: currentRoute
+    }) -}}
+    <div class="page-list">
+        {{ block('listResults') }}
+    </div>
+</div>
+{% else %}
+    {{ block('listResults') }}
+{% endif %}
+{% endblock %}
+
+{% block listResults %}
+{% if items is defined and items is not empty %}
+    <div class="table-responsive panel-collapse pull out webhook-list">
+        <table class="table table-hover table-striped table-bordered webhook-list" id="webhookTable">
+            <thead>
+            <tr>
+                {{- include(
+                    'MilexCoreBundle:Helper:tableheader.html.twig', {
+                        checkall: 'true',
+                        target: '#webhookTable',
+                        routeBase: 'webhook',
+                        templateButtons: {
+                            delete: (permissions['webhook:webhooks:deleteown'] or permissions['webhook:webhooks:deleteother'])
+                        }
+                }) -}}
+                {{- include(
+                    'MilexCoreBundle:Helper:tableheader.html.twig', {
+                        sessionVar: 'milex_webhook',
+                        orderBy: 'e.name',
+                        text: 'milex.core.name',
+                        class: 'col-webhook-name',
+                        default: true
+                }) -}}
+                {{- include(
+                    'MilexCoreBundle:Helper:tableheader.html.twig', {
+                        sessionVar: 'milex_webhook',
+                        orderBy: 'e.webhookUrl',
+                        text: 'milex.webhook.webhook_url',
+                        class: 'col-webhook-id visible-md visible-lg'
+                }) -}}
+                {{- include(
+                    'MilexCoreBundle:Helper:tableheader.html.twig', {
+                        sessionVar: 'milex_webhook',
+                        orderBy: 'e.id',
+                        text: 'milex.core.id',
+                        class: 'col-webhook-id visible-md visible-lg'
+                }) -}}
+            </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        {{- include(
+                            'MilexCoreBundle:Helper:list_actions.html.twig', {
+                                item: item,
+                                templateButtons: {
+                                    edit: securityHasEntityAccess(
+                                        permissions['webhook:webhooks:editown'],
+                                        permissions['webhook:webhooks:editother'],
+                                        item.getCreatedBy()
+                                    ),
+                                    clone: permissions['webhook:webhooks:create'],
+                                    delete: securityHasEntityAccess(
+                                        permissions['webhook:webhooks:deleteown'],
+                                        permissions['webhook:webhooks:deleteother'],
+                                        item.getCreatedBy()
+                                    )
+                                },
+                                routeBase: 'webhook'
+                        }) -}}
+                    </td>
+                    <td>
+                        <div>
+                            {{- include(
+                                'MilexCoreBundle:Helper:publishstatus_icon.html.twig', {
+                                    item: item,
+                                    model: 'webhook'
+                                }
+                            ) }}
+                            <a data-toggle="ajax" href="{{ path(
+                                'milex_webhook_action',
+                                { objectId: item.getId(), objectAction: 'view' }
+                            ) }}">
+                                {{ item.getName() }}
+                            </a>
+                            {% if item.getDescription() is defined and item.getDescription() is not empty %}
+                            <div class="text-muted mt-4">
+                                <small>{{ item.getDescription() }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="visible-md visible-lg">{{ item.getWebhookUrl() }}</td>
+                    <td class="visible-md visible-lg">{{ item.getId() }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel-footer">
+        {{- include(
+            'MilexCoreBundle:Helper:pagination.html.twig', {
+                totalItems: items|length,
+                page: page,
+                limit: limit,
+                menuLinkId: 'milex_webhook_index',
+                baseUrl: path('milex_webhook_index'),
+                sessionVar: 'milex_webhook'
+            }
+        ) }}
+    </div>
+{% else %}
+    {{ include('MilexCoreBundle:Helper:noresults.html.twig') }}
+{% endif %}
+{% endblock %}
