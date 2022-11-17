@@ -112,14 +112,14 @@
   "repositories": [
     {
       "type": "git",
-      "url": "https://github.com/milex/FOSOAuthServerBundle.git"
+      "url": "https://github.com/milexdev/FOSOAuthServerBundle.git"
     }
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "config": {
     "preferred-install": "dist",
-    "autoloader-suffix": "Milex4"
+    "autoloader-suffix": "Milex1"
   },
   "extra": {
     "milex-scaffold": {
